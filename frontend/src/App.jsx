@@ -1,34 +1,58 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import ProductList from './components/ProductList'
+import CreateProductForm from './components/CreateProductForm'
+import { getProducts, deleteProduct } from './services/api'
+import './index.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [products, setProducts] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+
+  const fetchProducts = async () => {
+    const productsArray = await getProducts()
+    setProducts(productsArray)
+  }
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const handleProductCreated = (newProduct) => {
+    setProducts([...products, newProduct])
+    setShowForm(false)
+  }
+
+  const handleEdit = (product) => {
+    setEditingProduct(product)
+    setShowForm(true)
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      await deleteProduct(id)
+      setProducts(products.filter(p => p.id !== id))
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="dashboard">
+      <h1>Solar Shop Dashboard</h1>
+      <button onClick={() => setShowForm(true)}>Add New Product</button>
+
+      {showForm && (
+        <CreateProductForm
+          product={editingProduct}
+          onCreated={handleProductCreated}
+          onClose={() => {
+            setShowForm(false)
+            setEditingProduct(null)
+          }}
+        />
+      )}
+
+      <ProductList products={products} onEdit={handleEdit} onDelete={handleDelete} />
+    </div>
   )
 }
 
